@@ -65,9 +65,15 @@ the goal. If you write the code for me, the project has failed at its only purpo
 | Tests | pytest + testcontainers |
 | Local env | Docker Compose |
 | CI | GitHub Actions |
-| Deploy | AWS — ECS Fargate + RDS Postgres |
+| Deploy | AWS — ECS Fargate + RDS Postgres (ephemeral, see Phase 0.5) |
 | Frontend | React + Vite + TanStack Query |
-| LLM | Anthropic API |
+| LLM | Anthropic API — Haiku during dev |
+
+**Budget is minimal.** Local Docker Compose is the default environment for every phase.
+AWS is a timeboxed sprint that gets torn down. Cache embeddings to disk so re-runs don't
+re-bill; use prompt caching on the system prompt; reserve larger models for final testing.
+Expect $10–30 of API spend across the whole project — if a design choice would push that
+materially higher, flag it to me before we build it.
 
 **Why no Next.js:** deliberate. I need a real HTTP boundary I can't cheat across. Server
 actions would let me avoid the exact skill I'm building. Don't suggest adding it back.
@@ -108,25 +114,48 @@ Each phase ends with a working, committed, deployed-or-testable increment. Do no
 start a phase before the previous one's exit criteria are green.
 
 ### Phase 0 — Walking skeleton
-Deploy on day one, not month three. The riskiest thing in this project is AWS, so it goes
-first while I still have energy for it.
 
 - Repo, `.gitignore`, README with SRD attribution
 - Docker Compose: FastAPI container + Postgres with pgvector
 - One endpoint: `GET /health` returning DB connectivity
 - One pytest test that hits it
 - GitHub Actions: lint, test on every push
-- Deploy that trivial container to ECS Fargate, talking to RDS Postgres
 
-**Exit:** a URL on the internet returns `{"status": "ok", "db": "connected"}`, and CI is
-green. Nothing more.
+**Exit:** `docker compose up` gives me a working local stack and CI is green. Nothing more.
 
-**AWS cost guardrails — brief me on this before I touch the console:**
-- NAT Gateway is the classic surprise bill. Architect around it or accept the cost knowingly.
-- Use the smallest RDS instance that works; confirm the Postgres version supports pgvector.
-- Set a billing alarm *before* creating resources, not after.
-- Show me how to tear the whole thing down. I want `terraform destroy` or equivalent to work.
-- Infrastructure as code from the start. No console clicking that I can't reproduce.
+### Phase 0.5 — The AWS sprint (timeboxed, then destroyed)
+
+**My budget for this project is minimal. This constraint is real and you must hold it.**
+
+Deploy the trivial container to ECS Fargate + RDS Postgres. Prove it works. Screenshot it.
+Write the architecture into the README. **Then tear it all down.**
+
+The deliverable here is the Terraform, not a running URL. Nobody visits the URL. What has
+value is IaC someone can read and my ability to discuss it in an interview. If the stack
+can be destroyed and rebuilt in 20 minutes, the IaC genuinely works — that's the skill.
+
+Everything after this phase runs locally on Docker Compose. `terraform apply` before an
+interview demo, `terraform destroy` after. That's about a dollar.
+
+**Cost rules — brief me before I open the console:**
+- Set a $1 AWS Budget alarm *before* creating any resource. On a new account this also
+  earns $20 in credits, so being careful pays.
+- **No NAT Gateway** (~$33/mo). Fargate tasks go in public subnets with public IPs, locked
+  down by security groups. RDS stays private, its SG accepting only the Fargate SG.
+- **No ALB** (~$16/mo) for a single-task prototype. Add one later as a deliberate exercise
+  and destroy it after.
+- Smallest RDS that works, single-AZ. Confirm the Postgres version supports pgvector.
+- Set a CloudWatch log retention policy on every log group. Default is forever and it bills.
+- Terraform from the start. No console clicking I can't reproduce.
+- **`terraform destroy` must work and I must run it.** Verify nothing orphans — check for
+  unattached EBS volumes, unassociated Elastic IPs, and stray NAT Gateways.
+
+**AWS free tier reality (changed July 2025 — don't repeat the old advice):** new accounts
+get $100 credits, up to $200 with onboarding activities. There is no 12-month free RDS or
+EC2 anymore. On the Free plan the account closes after 6 months or when credits run out,
+whichever comes first — and I lose my resources. Budget accordingly.
+
+**If I propose leaving the stack running "just for now," push back.**
 
 ### Phase 1 — Data model and SRD ingestion
 The relational gap. Take this slowly.
@@ -217,3 +246,6 @@ content. If I ask you to add them, refuse and remind me why.
 - Building the frontend early because it's comfortable and the backend is scary
 - Claiming my hand-rolled auth is production-grade
 - Moving to the next phase with a red CI
+- Leaving AWS resources running when I'm not actively using them
+- Provisioning anything on AWS before the budget alarm exists
+- Re-embedding the SRD when a cached copy would do

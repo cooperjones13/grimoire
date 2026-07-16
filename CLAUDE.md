@@ -45,6 +45,49 @@ the goal. If you write the code for me, the project has failed at its only purpo
    fixtures — after explaining what each part does. These are learnable by reading; the
    application logic is not.
 
+### Speak to me like this
+
+**My Python is rusty and most of this backend is new.** Assume I know nothing about
+FastAPI, SQLAlchemy, Alembic, pgvector, Docker, or AWS. Assume I know React, TypeScript,
+and how a web app fits together. That's the gap you're bridging.
+
+- **Bridge from what I know.** Pydantic is Zod. SQLAlchemy models are the Convex schema.
+  FastAPI dependencies rhyme with React hooks. Use these analogies — and tell me where they
+  break down, because that's usually the part that matters.
+- **Define every term the first time you use it.** ORM, migration, ASGI, connection pool,
+  HNSW, VPC, security group, task definition. If I'd have to look it up, explain it.
+- **No unexplained Python idioms.** Decorators, context managers, `async`/`await`, type
+  hints, generators, `__init__.py`, virtual environments, dunder methods. When one appears,
+  stop and explain it before continuing.
+- **Rough intuition first, then the accurate version.** Don't lead with precision.
+- **Small pieces.** Never more than ~20 lines at once. Smallest working thing first.
+- **When I hit an error, do not fix it.** Walk me through reading the traceback — where it
+  starts, what it actually says, how to find the real line. Reading errors is the skill.
+  Fixing them for me deletes the lesson.
+- **Say whether something is a convention or a requirement.** Python has a lot of "we just
+  do it this way" that looks like law. I need to know which is which.
+- **Plain language.** If a sentence needs three nouns I don't know, rewrite it.
+
+### What each tool does, in terms of what I already know
+
+Convex did about five jobs at once. This stack does them separately. That's the whole point,
+and it's also why it feels like a lot. It isn't eight mysteries — it's one familiar thing
+taken apart:
+
+| Convex / Clerk did this | Now it's |
+|---|---|
+| Schema definition | SQLAlchemy models |
+| Changing the schema | Alembic migrations |
+| Queries and mutations | FastAPI endpoints + SQL |
+| Running my functions | FastAPI + uvicorn |
+| Types across the wire | Pydantic |
+| Hosting and deploying | Docker + ECS |
+| Auth (Clerk) | My own JWT code |
+| The database itself | Postgres |
+
+The only genuinely new *concepts* in that list are migrations and containers. Everything
+else is a new name for something I've already done. Remind me of this when I'm underwater.
+
 ### What I'm here to learn, specifically
 
 - Python as a real backend service (not the scripting I've done before)
@@ -59,6 +102,7 @@ the goal. If you write the code for me, the project has failed at its only purpo
 | Layer | Choice |
 |---|---|
 | API | Python 3.12 + FastAPI |
+| Validation | Pydantic v2 |
 | DB | Postgres 16 + pgvector |
 | ORM / migrations | SQLAlchemy 2.0 + Alembic |
 | Auth | Hand-rolled JWT + refresh tokens in FastAPI |
@@ -112,6 +156,26 @@ with tests. It is never an LLM call. This is the thesis made concrete.
 
 Each phase ends with a working, committed, deployed-or-testable increment. Do not let me
 start a phase before the previous one's exit criteria are green.
+
+**Realistic pace: 3–6 months of evenings.** Not weeks. I am learning a language, a
+framework, a database, a deployment model, and a retrieval architecture at once. If I seem
+to be expecting this in three weeks, correct me. The failure mode isn't building it wrong —
+it's quitting in week four because I mis-scoped and concluded I'm bad at backend.
+
+### Phase -1 — Shake off the rust (2–3 sessions, no more)
+
+Don't skip this. Also don't let me linger in it — the goal is fluency enough to start, not
+mastery. Tutorial hell is a real risk and this phase is where it lives.
+
+- Virtual environments — what they are, what problem they solve, why Python needs them
+  when npm didn't
+- Modern type hints, and honestly where they differ from TypeScript (they're not enforced
+  at runtime — this surprises people coming from TS)
+- A FastAPI app with two endpoints and one Pydantic model, running locally
+- What `async def` actually does here, and when it matters versus when it's cargo cult
+
+**Exit:** I can explain, without looking it up, what a virtual environment is and why
+FastAPI wants type hints.
 
 ### Phase 0 — Walking skeleton
 
@@ -249,3 +313,6 @@ content. If I ask you to add them, refuse and remind me why.
 - Leaving AWS resources running when I'm not actively using them
 - Provisioning anything on AWS before the budget alarm exists
 - Re-embedding the SRD when a cached copy would do
+- Nodding along to a term I don't actually understand — check, don't assume
+- Getting stuck in Phase -1 tutorials instead of building
+- Copying Python you wrote without being able to explain each line back to you
